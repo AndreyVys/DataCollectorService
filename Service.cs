@@ -257,51 +257,106 @@ namespace DataCollectorService
 
         }
 
-        private bool WriteToDB(string sDBTableName, BriquettesData dbData)
+        private bool WriteToDB(string sDBTableName, BriquettesData BriqData)
         {
             int res = -1;
+            BriquettesData dbData = new BriquettesData();
+
             try
             {
-                SqlCommand dbCommand = dbConn.CreateCommand();
-                dbCommand.CommandText = String.Format("INSERT INTO " + sDBTableName + " ([datetime], [Error], [PressOff], [ManualMode], [AutoMode], [Counter], [MotorHours], [Safety], [DirtyFilter], [OilLevel], [OilLess15], " +
-                    "[OilMore75], [PressureSensorError], [TempSensorError], [CylindersNotInHome], [MainCylinderPressureError], [VerticalCylinderPressureError], [FormCylinderPressureError], [FreeStrokeMainCylinder], " +
-                    "[FreeStrokeVerticalCylinder], [FreeStrokeFormCylinder], [NoSawdust], [Lifebit]) VALUES (@datetime, @Error, @PressOff, @ManualMode, @AutoMode, @Counter, @MotorHours, @Safety, @DirtyFilter, " +
-                    "@OilLevel, @OilLess15, @OilMore75, @PressureSensorError, @TempSensorError, @CylindersNotInHome, @MainCylinderPressureError, @VerticalCylinderPressureError, @FormCylinderPressureError, @FreeStrokeMainCylinder, " +
-                    "@FreeStrokeVerticalCylinder, @FreeStrokeFormCylinder, @NoSawdust, @Lifebit) ");
-                
-                
-                dbCommand.Parameters.Add("datetime", SqlDbType.DateTime).Value = CurrentDate;
-                dbCommand.Parameters.Add("Error", SqlDbType.Bit).Value = dbData.Error;
-                dbCommand.Parameters.Add("PressOff", SqlDbType.Bit).Value = dbData.PressOff;
-                dbCommand.Parameters.Add("ManualMode", SqlDbType.Bit).Value = dbData.ManualMode;
-                dbCommand.Parameters.Add("AutoMode", SqlDbType.Bit).Value = dbData.AutoMode;
-                dbCommand.Parameters.Add("Counter", SqlDbType.BigInt).Value = dbData.Counter;
-                dbCommand.Parameters.Add("MotorHours", SqlDbType.BigInt).Value = dbData.MotorHours;
-                dbCommand.Parameters.Add("Safety", SqlDbType.Bit).Value = dbData.Safety;
-                dbCommand.Parameters.Add("DirtyFilter", SqlDbType.Bit).Value = dbData.DirtyFilter;
-                dbCommand.Parameters.Add("OilLevel", SqlDbType.Bit).Value = dbData.OilLevel;
-                dbCommand.Parameters.Add("OilLess15", SqlDbType.Bit).Value = dbData.OilLess15;
-                dbCommand.Parameters.Add("OilMore75", SqlDbType.Bit).Value = dbData.OilMore75;
-                dbCommand.Parameters.Add("PressureSensorError", SqlDbType.Bit).Value = dbData.PressureSensorError;
-                dbCommand.Parameters.Add("TempSensorError", SqlDbType.Bit).Value = dbData.TempSensorError;
-                dbCommand.Parameters.Add("CylindersNotInHome", SqlDbType.Bit).Value = dbData.CylindersNotInHome;
-                dbCommand.Parameters.Add("MainCylinderPressureError", SqlDbType.Bit).Value = dbData.MainCylinderPressureError;
-                dbCommand.Parameters.Add("VerticalCylinderPressureError", SqlDbType.Bit).Value = dbData.VerticalCylinderPressureError;
-                dbCommand.Parameters.Add("FormCylinderPressureError", SqlDbType.Bit).Value = dbData.FormCylinderPressureError;
-                dbCommand.Parameters.Add("FreeStrokeMainCylinder", SqlDbType.Bit).Value = dbData.FreeStrokeMainCylinder;
-                dbCommand.Parameters.Add("FreeStrokeVerticalCylinder", SqlDbType.Bit).Value = dbData.FreeStrokeVerticalCylinder;
-                dbCommand.Parameters.Add("FreeStrokeFormCylinder", SqlDbType.Bit).Value = dbData.FreeStrokeFormCylinder;
-                dbCommand.Parameters.Add("NoSawdust", SqlDbType.Bit).Value = dbData.NoSawdust;
-                dbCommand.Parameters.Add("Lifebit", SqlDbType.Bit).Value = dbData.Lifebit;
-
-                res = dbCommand.ExecuteNonQuery();
+                //Считываем переменную из базы
+                using (SqlCommand dbCommand = dbConn.CreateCommand())
+                {
+                    dbCommand.CommandText = "SELECT TOP 1 [Error], [PressOff], [ManualMode], [AutoMode], [Counter], [MotorHours], [Safety], [DirtyFilter], [OilLevel], [OilLess15], [OilMore75], [PressureSensorError], [TempSensorError], " +
+                        "[CylindersNotInHome], [MainCylinderPressureError], [VerticalCylinderPressureError], [FormCylinderPressureError], [FreeStrokeMainCylinder], [FreeStrokeVerticalCylinder], [FreeStrokeFormCylinder], [NoSawdust], " +
+                        "[Lifebit] FROM " + sDBTableName + " ORDER BY [id] DESC";
+                    SqlDataReader reader = dbCommand.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        dbData.Error = Convert.ToBoolean(reader?["Error"]);
+                        dbData.PressOff = Convert.ToBoolean(reader?["PressOff"]);
+                        dbData.ManualMode = Convert.ToBoolean(reader?["ManualMode"]);
+                        dbData.AutoMode = Convert.ToBoolean(reader?["AutoMode"]);
+                        dbData.Counter = Convert.ToInt64(reader["Counter"]);
+                        dbData.MotorHours = Convert.ToInt64(reader["MotorHours"]);
+                        dbData.Safety = Convert.ToBoolean(reader?["Safety"]);
+                        dbData.DirtyFilter = Convert.ToBoolean(reader?["DirtyFilter"]);
+                        dbData.OilLevel = Convert.ToBoolean(reader?["OilLevel"]);
+                        dbData.OilLess15 = Convert.ToBoolean(reader?["OilLess15"]);
+                        dbData.OilMore75 = Convert.ToBoolean(reader?["OilMore75"]);
+                        dbData.PressureSensorError = Convert.ToBoolean(reader?["PressureSensorError"]);
+                        dbData.TempSensorError = Convert.ToBoolean(reader?["TempSensorError"]);
+                        dbData.CylindersNotInHome = Convert.ToBoolean(reader?["CylindersNotInHome"]);
+                        dbData.MainCylinderPressureError = Convert.ToBoolean(reader?["MainCylinderPressureError"]);
+                        dbData.VerticalCylinderPressureError = Convert.ToBoolean(reader?["VerticalCylinderPressureError"]);
+                        dbData.FormCylinderPressureError = Convert.ToBoolean(reader?["FormCylinderPressureError"]);
+                        dbData.FreeStrokeMainCylinder = Convert.ToBoolean(reader?["FreeStrokeMainCylinder"]);
+                        dbData.FreeStrokeVerticalCylinder = Convert.ToBoolean(reader?["FreeStrokeVerticalCylinder"]);
+                        dbData.FreeStrokeFormCylinder = Convert.ToBoolean(reader?["FreeStrokeFormCylinder"]);
+                        dbData.NoSawdust = Convert.ToBoolean(reader?["NoSawdust"]);
+                        dbData.Lifebit = Convert.ToBoolean(reader?["Lifebit"]);
+                    }
+                    reader.Close();
+                    dbData.result = 0;
+                }
             }
 
             catch (Exception exdb)
             {
-                AddLogError("Ошибка записи БД: " + exdb.Message);
-            }
+                AddLogError("Ошибка чтения БД: " + exdb.Message);
+                dbData.result = -1;
 
+            }
+            if (dbData.Equals(BriqData))
+                AddLog("Данные не изменились");
+            else
+            {
+
+                try
+                {
+                    using (SqlCommand dbCommand = dbConn.CreateCommand())
+                    {
+                        dbCommand.CommandText = String.Format("INSERT INTO " + sDBTableName + " ([datetime], [Error], [PressOff], [ManualMode], [AutoMode], [Counter], [MotorHours], [Safety], [DirtyFilter], [OilLevel], [OilLess15], " +
+                            "[OilMore75], [PressureSensorError], [TempSensorError], [CylindersNotInHome], [MainCylinderPressureError], [VerticalCylinderPressureError], [FormCylinderPressureError], [FreeStrokeMainCylinder], " +
+                            "[FreeStrokeVerticalCylinder], [FreeStrokeFormCylinder], [NoSawdust], [Lifebit]) VALUES (@datetime, @Error, @PressOff, @ManualMode, @AutoMode, @Counter, @MotorHours, @Safety, @DirtyFilter, " +
+                            "@OilLevel, @OilLess15, @OilMore75, @PressureSensorError, @TempSensorError, @CylindersNotInHome, @MainCylinderPressureError, @VerticalCylinderPressureError, @FormCylinderPressureError, @FreeStrokeMainCylinder, " +
+                            "@FreeStrokeVerticalCylinder, @FreeStrokeFormCylinder, @NoSawdust, @Lifebit) ");
+
+
+                        dbCommand.Parameters.Add("datetime", SqlDbType.DateTime).Value = CurrentDate;
+                        dbCommand.Parameters.Add("Error", SqlDbType.Bit).Value = BriqData.Error;
+                        dbCommand.Parameters.Add("PressOff", SqlDbType.Bit).Value = BriqData.PressOff;
+                        dbCommand.Parameters.Add("ManualMode", SqlDbType.Bit).Value = BriqData.ManualMode;
+                        dbCommand.Parameters.Add("AutoMode", SqlDbType.Bit).Value = BriqData.AutoMode;
+                        dbCommand.Parameters.Add("Counter", SqlDbType.BigInt).Value = BriqData.Counter;
+                        dbCommand.Parameters.Add("MotorHours", SqlDbType.BigInt).Value = BriqData.MotorHours;
+                        dbCommand.Parameters.Add("Safety", SqlDbType.Bit).Value = BriqData.Safety;
+                        dbCommand.Parameters.Add("DirtyFilter", SqlDbType.Bit).Value = BriqData.DirtyFilter;
+                        dbCommand.Parameters.Add("OilLevel", SqlDbType.Bit).Value = BriqData.OilLevel;
+                        dbCommand.Parameters.Add("OilLess15", SqlDbType.Bit).Value = BriqData.OilLess15;
+                        dbCommand.Parameters.Add("OilMore75", SqlDbType.Bit).Value = BriqData.OilMore75;
+                        dbCommand.Parameters.Add("PressureSensorError", SqlDbType.Bit).Value = BriqData.PressureSensorError;
+                        dbCommand.Parameters.Add("TempSensorError", SqlDbType.Bit).Value = BriqData.TempSensorError;
+                        dbCommand.Parameters.Add("CylindersNotInHome", SqlDbType.Bit).Value = BriqData.CylindersNotInHome;
+                        dbCommand.Parameters.Add("MainCylinderPressureError", SqlDbType.Bit).Value = BriqData.MainCylinderPressureError;
+                        dbCommand.Parameters.Add("VerticalCylinderPressureError", SqlDbType.Bit).Value = BriqData.VerticalCylinderPressureError;
+                        dbCommand.Parameters.Add("FormCylinderPressureError", SqlDbType.Bit).Value = BriqData.FormCylinderPressureError;
+                        dbCommand.Parameters.Add("FreeStrokeMainCylinder", SqlDbType.Bit).Value = BriqData.FreeStrokeMainCylinder;
+                        dbCommand.Parameters.Add("FreeStrokeVerticalCylinder", SqlDbType.Bit).Value = BriqData.FreeStrokeVerticalCylinder;
+                        dbCommand.Parameters.Add("FreeStrokeFormCylinder", SqlDbType.Bit).Value = BriqData.FreeStrokeFormCylinder;
+                        dbCommand.Parameters.Add("NoSawdust", SqlDbType.Bit).Value = BriqData.NoSawdust;
+                        dbCommand.Parameters.Add("Lifebit", SqlDbType.Bit).Value = BriqData.Lifebit;
+
+                        res = dbCommand.ExecuteNonQuery();
+                    }
+                }
+
+                catch (Exception exdb)
+                {
+                    AddLogError("Ошибка записи БД: " + exdb.Message);
+                }
+
+            }
 
             return res == 0;
         }

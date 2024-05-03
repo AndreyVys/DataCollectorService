@@ -16,8 +16,8 @@ CREATE USER scada FOR LOGIN scada
 GO
 
 ALTER ROLE db_datawriter ADD MEMBER [scada]
+ALTER ROLE db_datareader ADD MEMBER [scada]
 GO
-
 
 CREATE TABLE [dbo].[Press1Data](
 	[id] [bigint] IDENTITY(1,1) NOT NULL,
