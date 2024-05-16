@@ -5,7 +5,7 @@ VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataCollectorService", "DataCollectorService.csproj", "{80958E07-AE43-41FB-8F65-D155C78DF67F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataCollectorServiceConsole", "..\DataCollectorServiceConsole\DataCollectorServiceConsole.csproj", "{694D3AF8-4527-4183-BB6C-F52BD5EAB0DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataCollectorServiceConsole", "DataCollectorServiceConsole\DataCollectorServiceConsole.csproj", "{694D3AF8-4527-4183-BB6C-F52BD5EAB0DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
