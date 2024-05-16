@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
 using System.Security.AccessControl;
@@ -34,7 +35,7 @@ namespace DataCollectorService
             Log = "DataCollector"
         };
         private readonly SqlConnection dbConn = new SqlConnection();
-        private string sDBConnectionString, sControllerIP1, sControllerIP2, sControllerIP3;
+        private string sDBConnectionString, sControllerIP1, sControllerIP2, sControllerIP3, sControllerIP4;
         private double TimerInterval;
         struct BriquettesData
         {
@@ -139,6 +140,7 @@ namespace DataCollectorService
                             sControllerIP1 = (string)subKey.GetValue("ControllerIP1");
                             sControllerIP2 = (string)subKey.GetValue("ControllerIP2");
                             sControllerIP3 = (string)subKey.GetValue("ControllerIP3");
+                            sControllerIP4 = (string)subKey.GetValue("ControllerIP4");
                             double.TryParse(subKey.GetValue("TimerInterval").ToString(), out TimerInterval);
                         }
                     }
@@ -184,7 +186,8 @@ namespace DataCollectorService
                         Client.Disconnect();
                         if (BriqData.result == 0)
                             WriteToDB("Press1Data", BriqData);
-                    } else
+                    }
+                    else
                         AddLogError("Ошибка соединения с контроллером пресса 1");
 
                     if (PlcConnect(sControllerIP2, Rack, Slot))
@@ -193,7 +196,8 @@ namespace DataCollectorService
                         Client.Disconnect();
                         if (BriqData.result == 0)
                             WriteToDB("Press2Data", BriqData);
-                    } else
+                    }
+                    else
                         AddLogError("Ошибка соединения с контроллером пресса 2");
 
                     if (PlcConnect(sControllerIP3, Rack, Slot))
@@ -202,8 +206,52 @@ namespace DataCollectorService
                         Client.Disconnect();
                         if (BriqData.result == 0)
                             WriteToDB("Press3Data", BriqData);
-                    } else
+                    }
+                    else
                         AddLogError("Ошибка соединения с контроллером пресса 3");
+                    float Weight, WeightFromDB = 0;
+                    if (PlcConnect(sControllerIP4, 0, 2))
+                    {
+                        Client.DBRead(1086, 2, 8, dbBuffer);
+                        Weight = float.Parse(S7.GetCharsAt(dbBuffer, 0, 8), new CultureInfo("en-us"));
+                        Client.Disconnect();
+                        using (SqlCommand dbCommand = dbConn.CreateCommand())
+                        {
+                            dbCommand.CommandText = "SELECT TOP 1 [Data] FROM Weight ORDER BY [id] DESC";
+                            SqlDataReader reader = dbCommand.ExecuteReader();
+                            while (reader.Read())
+                            {
+                                WeightFromDB = Convert.ToSingle(reader?["Weight"]);
+                            }
+                            reader.Close();
+                        }
+
+                        if (WeightFromDB != Weight)
+                        {
+
+                            try
+                            {
+                                using (SqlCommand dbCommand = dbConn.CreateCommand())
+                                {
+                                    dbCommand.CommandText = String.Format("INSERT INTO Weight ([datetime], [Data]) VALUES (@datetime, @Weight)");
+                                    dbCommand.Parameters.Add("datetime", SqlDbType.DateTime).Value = CurrentDate;
+                                    dbCommand.Parameters.Add("Weight", SqlDbType.Float).Value = Weight;
+                                    dbCommand.ExecuteNonQuery();
+                                }
+                            }
+
+                            catch (Exception exdb)
+                            {
+                                AddLogError("Ошибка записи БД: " + exdb.Message);
+                            }
+                        }
+                        else
+                        {
+                            AddLog("Данные не изменились. Масса равна " + Weight);
+                        }
+                    }
+                    else
+                        AddLogError("Ошибка соединения с контроллером линии");
                 }
                 catch (Exception ex)
                 {
@@ -237,7 +285,7 @@ namespace DataCollectorService
                 BriqData.DirtyFilter = S7.GetBitAt(dbBuffer, 10, 1);
                 BriqData.OilLevel = S7.GetBitAt(dbBuffer, 10, 2);
                 BriqData.OilLess15 = S7.GetBitAt(dbBuffer, 10, 3);
-                BriqData.OilMore75 = S7.GetBitAt(dbBuffer,10, 4);
+                BriqData.OilMore75 = S7.GetBitAt(dbBuffer, 10, 4);
                 BriqData.PressureSensorError = S7.GetBitAt(dbBuffer, 10, 5);
                 BriqData.TempSensorError = S7.GetBitAt(dbBuffer, 10, 6);
                 BriqData.CylindersNotInHome = S7.GetBitAt(dbBuffer, 10, 7);
@@ -250,7 +298,8 @@ namespace DataCollectorService
                 BriqData.NoSawdust = S7.GetBitAt(dbBuffer, 11, 6);
                 BriqData.Lifebit = S7.GetBitAt(dbBuffer, 11, 7);
 
-            } else
+            }
+            else
                 AddLogError("Ошибка чтения с контроллера: " + BriqData.result);
 
             return BriqData;
@@ -402,7 +451,7 @@ namespace DataCollectorService
             return res == 0;
         }
 
-  
+
 
     }
 }
